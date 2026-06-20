@@ -81,3 +81,8 @@ Phrases are scored by their **rarest** component word (`freq_of` takes the `min`
   writes to a note open in the editor.
 - Claude requests are **deduped by raw text** before batching (`idx2raw`), so
   identical card fronts cost one request, not many.
+- Lemmas are **cached across runs** in a gitignored `shelve` KV store
+  (`lemma_cache*`, override with `LEMMA_CACHE`); only cache *misses* hit the
+  Batches API. The key is just the raw entry text, so the cache is reused even if
+  you change the model or prompt — delete `lemma_cache*` to force a re-query under
+  a new config. Failed requests aren't cached, so they retry next run.
