@@ -2,8 +2,8 @@
 
 Reorder the **new cards** in an Anki deck so that the words/expressions you
 encounter most often in real French come first. Words are normalized to their
-dictionary form by an LLM, scored against a real frequency corpus, and the new
-cards are repositioned via Anki's local HTTP API.
+dictionary form (lemma) by an LLM, scored against **Lexique**'s lemma-level
+frequency corpus, and the new cards are repositioned via Anki's local HTTP API.
 
 > Move this file into your new repo (rename to `README.md` if you like).
 
@@ -24,7 +24,7 @@ Three components, each doing the job it's actually good at:
 | Component | Role | Why |
 |---|---|---|
 | **Claude (LLM), batched** | **Normalization only** — turn each entry into its dictionary citation form (lemma) and flag likely typos. | Lemmatization with articles, elisions, irregular plurals, and verb forms is genuinely hard rule-based work; LLMs are excellent at it. |
-| **`wordfreq` (corpus)** | **The frequency number** — `zipf_frequency(lemma, "fr")`. | A real corpus is accurate, reproducible, and free. |
+| **Lexique 3.83 (corpus)** | **The frequency number** — lemma-level frequency (`freqlemfilms2`), summed across every inflected form. `wordfreq` is a fallback for words Lexique lacks. | True per-lemma counts (so `chien` + `chiens` land together), reproducible and free. |
 | **AnkiConnect (HTTP)** | **Read + write + reposition** cards. | Local JSON-over-HTTP API into the running Anki app. |
 
 **Key design rule:** the LLM produces the *lemma*; the corpus produces the
@@ -33,13 +33,16 @@ hallucinate inconsistent ranks. The LLM normalizes; the corpus ranks.
 
 ### Why normalize first?
 
-Frequency lists are keyed on surface forms. `chien` and `chiens` are separate
-entries with different frequencies, so the *same noun* would sort differently
-depending on whether I happened to record the singular or the plural. Verbs are
-worse (`manger` vs `mangé` vs `mangeaient`). Reducing every entry to one
-citation form before the frequency lookup makes the sort consistent regardless
-of how I recorded it. Articles (`le/la/les/un/une/des`, `l'`, `d'`) are stripped
-in the same pass.
+Surface-form frequency lists key `chien` and `chiens` as separate entries with
+different counts, so the *same noun* would sort differently depending on whether
+I happened to record the singular or the plural. Verbs are worse (`manger` vs
+`mangé` vs `mangeaient`). The LLM reduces every entry to one citation form
+(lemma), and we look that lemma up in **Lexique**, whose `freqlemfilms2` is the
+frequency of the lemma *aggregated across all of its inflected forms* — i.e.
+`chien` + `chiens` counted together. So the score is both consistent (independent
+of which form I recorded) and correct (the whole lemma's weight, not just one
+form's). Articles (`le/la/les/un/une/des`, `l'`, `d'`) are stripped in the same
+pass.
 
 For phrases/expressions, there is no whole-phrase frequency, so we score by the
 **rarest component word** — usually the word that governs whether you can read
@@ -76,6 +79,9 @@ pip install anthropic wordfreq requests
 3. **`ANTHROPIC_API_KEY`** set in the environment.
 4. **Back up the collection** before the first real run (File → Export →
    `.colpkg`) — this script repositions cards.
+5. **Lexique data** — the script auto-downloads `Lexique383.tsv` (~30 MB) on
+   first run from <http://www.lexique.org>. If that host is unreachable, download
+   it manually and place it next to the script (or point `LEXIQUE_TSV` at it).
 
 ---
 
@@ -85,7 +91,8 @@ pip install anthropic wordfreq requests
 |---|---|
 | `DECK_QUERY` | Anki search selecting the new cards, e.g. `deck:"French" is:new` |
 | `SOURCE_FIELD` | The note field holding the French word/expression (e.g. `Front`) |
-| `MODEL` | `claude-opus-4-8` default; `claude-haiku-4-5` is much cheaper for this simple task |
+| `MODEL` | `claude-haiku-4-5` default — cheap and plenty for normalization; `claude-opus-4-8` for maximum accuracy |
+| `LEXIQUE_COL` | Which Lexique frequency to use: `freqlemfilms2` (subtitles / everyday speech, default) or `freqlemlivres` (books / written French) |
 | `WRITE_LEMMA_TO` / `WRITE_FREQ_TO` | Fields to store the lemma / zipf value (must already exist on the note type), or `None` |
 | `DRY_RUN` | `True` = preview only, writes nothing |
 | `AUTO_REPOSITION` | `False` = reposition manually in the Browser; `True` = script sets order directly |
@@ -100,7 +107,8 @@ Fields → Add.
 1. `findCards` + `cardsInfo` → pull the new cards' text (HTML stripped).
 2. **Claude Batches API** → normalize each distinct entry to
    `{lemma, pos, is_suspect, suggestion}` via structured JSON output.
-3. `wordfreq.zipf_frequency(lemma, "fr")` → frequency (rarest word for phrases).
+3. **Lexique** lemma-level frequency (`freqlemfilms2`, summed over all inflected
+   forms) → Zipf-scaled score; rarest word for phrases; `wordfreq` fallback.
 4. Sort most-frequent-first; assign new-queue positions `1, 2, 3, …`.
 5. Write back: optional `Lemma`/`Freq` fields, then reposition.
 
@@ -117,8 +125,8 @@ Cells delimited with `# %%` so it runs as a notebook or a plain script.
 #   - export ANTHROPIC_API_KEY=...
 #   - BACK UP your collection first (File → Export → .colpkg)
 
-import re, html, json, time, requests
-from wordfreq import zipf_frequency
+import os, re, csv, math, html, json, time, requests
+from wordfreq import zipf_frequency   # fallback for words Lexique doesn't list
 from anthropic import Anthropic
 from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
 from anthropic.types.messages.batch_create_params import Request
@@ -126,7 +134,8 @@ from anthropic.types.messages.batch_create_params import Request
 # %% [1] CONFIG — set these for your collection
 DECK_QUERY   = 'deck:"French" is:new'   # which new cards to sort
 SOURCE_FIELD = "Front"                  # field holding the French word/expression
-MODEL        = "claude-opus-4-8"        # simple task — "claude-haiku-4-5" is much cheaper
+MODEL        = "claude-haiku-4-5"       # cheap & plenty here — "claude-opus-4-8" for max accuracy
+LEXIQUE_COL  = "freqlemfilms2"          # subtitles/everyday; "freqlemlivres" = books
 
 WRITE_LEMMA_TO = "Lemma"   # store the lemma here, or None (field must exist)
 WRITE_FREQ_TO  = "Freq"    # store the zipf value here, or None (field must exist)
@@ -149,6 +158,36 @@ def clean(s):                       # Anki fields contain HTML
 # %% [1.5] Connectivity check (optional)
 print("AnkiConnect version:", anki("version"))   # → 6 if the bridge is up
 print(len(anki("findCards", query=DECK_QUERY)), "new cards match your query")
+
+# %% [2.5] Lexique frequency index — lemma-level, aggregated across inflected forms
+LEXIQUE_TSV = "Lexique383.tsv"
+LEXIQUE_URL = "http://www.lexique.org/databases/Lexique383/Lexique383.tsv"
+
+if not os.path.exists(LEXIQUE_TSV):                       # one-time ~30 MB download
+    print("Downloading Lexique383 …")
+    resp = requests.get(LEXIQUE_URL, timeout=180); resp.raise_for_status()
+    with open(LEXIQUE_TSV, "wb") as fh:
+        fh.write(resp.content)
+
+def _f(x):
+    try: return float(x)
+    except (TypeError, ValueError): return 0.0
+
+lex_lemma, lex_ortho = {}, {}        # lowercased form -> best per-million frequency
+with open(LEXIQUE_TSV, encoding="utf-8", newline="") as fh:
+    for row in csv.DictReader(fh, delimiter="\t"):
+        f = _f(row.get(LEXIQUE_COL))
+        lem, ort = row["lemme"].strip().lower(), row["ortho"].strip().lower()
+        if lem and f > lex_lemma.get(lem, -1.0): lex_lemma[lem] = f   # max over homographs
+        if ort and f > lex_ortho.get(ort, -1.0): lex_ortho[ort] = f
+print(f"Lexique loaded: {len(lex_lemma)} lemmas via {LEXIQUE_COL}.")
+
+def _zipf_equiv(f):                  # per-million -> Zipf scale (log10 per-billion)
+    return math.log10(f) + 3.0 if f > 0 else 0.0
+
+def token_freq(tok):                 # one word: Lexique lemma -> Lexique surface -> wordfreq
+    f = lex_lemma.get(tok, lex_ortho.get(tok))
+    return _zipf_equiv(f) if f is not None else zipf_frequency(tok, "fr")
 
 # %% [3] Pull the new cards
 items = [{"card_id": c["cardId"], "note_id": c["note"],
@@ -204,10 +243,10 @@ for res in client.messages.batches.results(batch.id):
     else:
         print("FAILED:", idx2raw[res.custom_id], res.result.type)
 
-# %% [5] Attach lemma + frequency (rarest component word for phrases)
+# %% [5] Attach lemma + frequency (Lexique lemma-level; rarest component word for phrases)
 def freq_of(lemma):
     toks = [t for t in lemma.lower().split() if t]
-    return min((zipf_frequency(t, "fr") for t in toks), default=0.0)
+    return min((token_freq(t) for t in toks), default=0.0)
 
 for it in items:
     n = norm.get(it["raw"], {})
@@ -273,22 +312,32 @@ else:
 - **Zero-padding** the `Freq` value makes Anki's text sort match numeric order.
 - **Unknown/typo words** get `zipf = 0.0` and sink to the bottom — usually what
   you want for "study common words first," and a handy review list of suspects.
+- **First run downloads Lexique** (~30 MB) to `Lexique383.tsv` beside the script;
+  later runs reuse it. If the download fails, fetch the TSV manually from
+  lexique.org and drop it in place.
 
 ---
 
-## Alternative frequency source (optional upgrade)
+## Frequency source details
 
-`wordfreq` is surface-form based, so looking up the lemma gives a good proxy. For
-the most accurate **lemma-level** French frequency (aggregated across all
-inflected forms), swap in [Lexique](http://www.lexique.org/) and use its
-`freqlemfilms2` column instead of `zipf_frequency`. More setup, better numbers
-for verbs.
+The primary source is **Lexique 3.83**'s `freqlemfilms2` — the lemma's frequency
+in a film-subtitle corpus (everyday/spoken register), aggregated across every
+inflected form. Switch `LEXIQUE_COL` to `freqlemlivres` for a written/book
+register instead. Per-million counts are converted to the **Zipf scale**
+(`log10(per-million) + 3`) so they're directly comparable to the `wordfreq`
+fallback used for words Lexique doesn't list (proper nouns, anglicisms, some
+inflected phrase components). Unknown words score `0.0` and sink to the bottom.
+
+Prefer not to manage the TSV? `pip install pylexique` bundles the same Lexique383
+data with an object API (`Lexique383().lexique[word].freqlemfilms2`); the raw TSV
+is used here to keep the frequency math explicit and dependency-light.
 
 ---
 
 ## References
 
 - AnkiConnect — https://github.com/FooSoft/anki-connect (add-on code `2055492159`)
-- wordfreq — https://pypi.org/project/wordfreq/ · Zipf scale: https://www.wellformedness.com/blog/zipf-scale/
-- Lexique (French lexical database) — http://www.lexique.org/
+- Lexique (French lexical database) — http://www.lexique.org/ · TSV: http://www.lexique.org/databases/Lexique383/Lexique383.tsv
+- pylexique (pip wrapper bundling Lexique383) — https://pypi.org/project/pylexique/
+- wordfreq (fallback source) — https://pypi.org/project/wordfreq/ · Zipf scale: https://www.wellformedness.com/blog/zipf-scale/
 - FrequencyMan (zero-code Anki add-on alternative) — https://ankiweb.net/shared/info/909420026
