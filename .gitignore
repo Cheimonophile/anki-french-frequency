@@ -1,0 +1,12 @@
+# Lexique corpus is auto-downloaded on first run (~30 MB) — don't commit it
+Lexique383.tsv
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Local secrets
+.env

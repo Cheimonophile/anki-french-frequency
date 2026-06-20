@@ -1,0 +1,3 @@
+anthropic
+wordfreq
+requests
