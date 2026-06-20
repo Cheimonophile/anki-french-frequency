@@ -2,3 +2,7 @@ anthropic
 wordfreq
 requests
 pandas
+
+# Dev tooling: strips notebook outputs on commit (see .gitattributes).
+# After cloning, run once to activate the git filter: nbstripout --install
+nbstripout
