@@ -91,7 +91,7 @@ pip install anthropic wordfreq requests
 |---|---|
 | `DECK_QUERY` | Anki search selecting the new cards, e.g. `deck:"French" is:new` |
 | `SOURCE_FIELD` | The note field holding the French word/expression (e.g. `Front`) |
-| `MODEL` | `claude-opus-4-8` default; `claude-haiku-4-5` is much cheaper for this simple task |
+| `MODEL` | `claude-haiku-4-5` default — cheap and plenty for normalization; `claude-opus-4-8` for maximum accuracy |
 | `LEXIQUE_COL` | Which Lexique frequency to use: `freqlemfilms2` (subtitles / everyday speech, default) or `freqlemlivres` (books / written French) |
 | `WRITE_LEMMA_TO` / `WRITE_FREQ_TO` | Fields to store the lemma / zipf value (must already exist on the note type), or `None` |
 | `DRY_RUN` | `True` = preview only, writes nothing |
@@ -134,7 +134,7 @@ from anthropic.types.messages.batch_create_params import Request
 # %% [1] CONFIG — set these for your collection
 DECK_QUERY   = 'deck:"French" is:new'   # which new cards to sort
 SOURCE_FIELD = "Front"                  # field holding the French word/expression
-MODEL        = "claude-opus-4-8"        # simple task — "claude-haiku-4-5" is much cheaper
+MODEL        = "claude-haiku-4-5"       # cheap & plenty here — "claude-opus-4-8" for max accuracy
 LEXIQUE_COL  = "freqlemfilms2"          # subtitles/everyday; "freqlemlivres" = books
 
 WRITE_LEMMA_TO = "Lemma"   # store the lemma here, or None (field must exist)
