@@ -49,6 +49,11 @@ Required before running:
 `Lexique383.tsv` (~30 MB) auto-downloads on first run and is gitignored; later
 runs reuse it. Override its path with the `LEXIQUE_TSV` env var.
 
+Notebook **outputs are stripped on commit** by an `nbstripout` git filter
+(`.gitattributes` → `*.ipynb filter=nbstripout`); the working copy keeps its
+outputs, git records none. The filter is defined in local `.git/config`, not in
+the repo, so on a fresh clone run `nbstripout --install` once to re-enable it.
+
 ## Architecture — the one rule that matters
 
 The pipeline deliberately splits three jobs across three tools, and the
