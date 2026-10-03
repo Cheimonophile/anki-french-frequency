@@ -9,6 +9,28 @@ frequent French words come first. It normalizes each entry to its dictionary
 lemma with Claude, scores that lemma against the Lexique 3.83 corpus, and
 repositions the cards through AnkiConnect's local HTTP API.
 
+It also has an **`ajouter` skill** for *adding* cards from Claude Code — see
+"Adding cards" below.
+
+## Adding cards: the `ajouter` skill and `anki` MCP server
+
+- [.claude/skills/ajouter/SKILL.md](.claude/skills/ajouter/SKILL.md) — workflow:
+  lemmatize → duplicate check → find in-deck synonyms → `word_frequency` ranks the
+  synonym group → most common gets `Basic (and reversed card)`, the rest get
+  `Basic` (French→English only) → preview → add on confirmation. Existing cards
+  are never modified; reverse-card conflicts are only reported.
+- [tools/anki_mcp.py](tools/anki_mcp.py) — stdio MCP server registered in
+  [.mcp.json](.mcp.json). Tools: `list_decks`, `search_deck`, `word_frequency`,
+  `add_note`. Frequency code is copied from the notebook (cells [2], [2.5], [5]);
+  keep the two in sync if you change the lookup chain.
+- **No delete, by design.** The user does not want Claude able to delete cards.
+  `anki()` in the server enforces an `ALLOWED_ACTIONS` allowlist (read + `addNote`
+  only) — don't add delete, update, or suspend actions to it. A `PreToolUse` hook
+  ([.claude/hooks/guard_anki.py](.claude/hooks/guard_anki.py), wired in
+  [.claude/settings.json](.claude/settings.json)) blocks Bash commands that hit
+  port 8765 directly and code that names AnkiConnect delete actions. It is
+  best-effort, not a sandbox.
+
 ## Source of truth: the notebook, not the markdown
 
 [anki_french_frequency_sort.ipynb](anki_french_frequency_sort.ipynb) is the

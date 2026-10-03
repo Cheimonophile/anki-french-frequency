@@ -2,6 +2,7 @@ anthropic
 wordfreq
 requests
 pandas
+mcp>=2          # tools/anki_mcp.py — the anki MCP server behind the ajouter skill
 
 # Dev tooling: strips notebook outputs on commit (see .gitattributes).
 # After cloning, run once to activate the git filter: nbstripout --install

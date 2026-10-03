@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "anki": {
+      "command": ".venv/bin/python",
+      "args": ["tools/anki_mcp.py"]
+    }
+  }
+}
