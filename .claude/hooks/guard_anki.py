@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """PreToolUse guard: keep Claude away from AnkiConnect except via the anki MCP server.
 
-The MCP server (tools/anki_mcp.py) only allows read + add. This hook closes the
+The MCP server (tools/anki_mcp.py) only allows read + add + Front/Back field
+edits — never delete or suspend. This hook closes the
 obvious side doors:
   - Bash commands that talk to AnkiConnect directly (port 8765) or name a
     delete action, e.g. `curl localhost:8765 -d '{"action": ...}'`.
@@ -26,7 +27,7 @@ tool  = event.get("tool_name", "")
 text  = json.dumps(event.get("tool_input", {}))
 
 if tool == "Bash" and (PORT_RE.search(text) or DELETE_RE.search(text)):
-    block("don't call AnkiConnect directly — use the anki MCP tools (read + add only).")
+    block("don't call AnkiConnect directly — use the anki MCP tools (read, add, field edits only).")
 
 if tool in ("Write", "Edit", "MultiEdit", "NotebookEdit") and DELETE_RE.search(text):
     block("writing code that deletes Anki notes/decks is not allowed in this repo.")

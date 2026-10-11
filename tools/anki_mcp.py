@@ -1,7 +1,8 @@
-"""Anki MCP server — lets Claude Code search the Français deck and add cards.
+"""Anki MCP server — lets Claude Code search the Français deck, add cards, and
+fix the Front/Back text of existing ones.
 
-Exposes four tools: list_decks, search_deck, word_frequency, add_note.
-There is deliberately NO way to delete, edit, or suspend anything: anki() only
+Exposes five tools: list_decks, search_deck, word_frequency, add_note, update_note.
+There is deliberately NO way to delete or suspend anything: anki() only
 forwards actions in ALLOWED_ACTIONS, so even a bug can't reach a delete action.
 
 Same division of labour as the notebook: Claude (the caller) produces lemmas,
@@ -26,8 +27,9 @@ LEXIQUE_COL = "freqlemfilms2"         # subtitles/everyday; "freqlemlivres" = bo
 ADDED_TAG   = "claude-added"
 MODELS      = {"both": "Basic (and reversed card)", "fr_to_en": "Basic"}
 
-# Read + add only. Never add a delete/update/suspend action here.
-ALLOWED_ACTIONS = frozenset({"version", "deckNames", "findNotes", "notesInfo", "addNote"})
+# Read + add + Front/Back field edits. Never add a delete/suspend action here.
+ALLOWED_ACTIONS = frozenset({"version", "deckNames", "findNotes", "notesInfo", "addNote",
+                             "updateNoteFields"})
 
 mcp = MCPServer("anki")
 
@@ -48,8 +50,10 @@ def clean(s):                         # Anki fields contain HTML
 
 
 # ── Normalization for matching ──────────────────────────────────────────────
-ARTICLE_RE = re.compile(r"^(?:de la |de l'|un |une |le |la |les |l'|des |du |d')")
-PLURAL_RE  = re.compile(r"\.(?:s|x|es)\b")    # deck style: "un tatouage.s"
+ARTICLE_RE = re.compile(r"^(?:de la |de l'|un/une |un/e |un |une |le |la |les |l'|des |du |d')")
+# Gender/plural markers: "un.e citadin.e.s", "heureux.se.s", old "frais/e/s", "beauté(s)".
+# Runs on folded text (accents stripped), so "aigu.ë.s" is already "aigu.e.s".
+PLURAL_RE  = re.compile(r"(?<=\w)(?:\.[a-z]+)+\b|(?<=\w)(?:/[a-z]+)+\b|(?<=\w)\(s\)")
 
 def fold(s):                          # lowercase, accent-free, single-spaced
     s = unicodedata.normalize("NFKD", clean(s).lower().replace("’", "'"))
@@ -115,8 +119,9 @@ def search_deck(terms: list[str],
     field="front" and English glosses with field="back".
 
     Each hit has: note_id, deck, model, front, back, tags, matched_term, and
-    exact — true when the Front, minus its article and plural marker (".s"),
-    equals the term exactly (i.e. very likely a duplicate).
+    exact — true when the Front, minus its article and gender/plural markers
+    ("un.e citadin.e.s" -> "citadin"), equals the term exactly (i.e. very
+    likely a duplicate).
     """
     notes = anki("notesInfo", notes=anki("findNotes", query=f'deck:"{ROOT_DECK}"'))
     decks = _note_decks()
@@ -194,6 +199,40 @@ def add_note(deck: str, front: str, back: str,
     })
     return {"note_id": note_id, "deck": deck, "model": MODELS[card_type],
             "front": front.strip(), "back": back.strip()}
+
+
+@mcp.tool()
+def update_note(note_id: int, front: str | None = None, back: str | None = None) -> dict:
+    """Change the Front and/or Back text of one existing note in a Français deck.
+
+    Use only when the user explicitly asks to fix a specific existing card.
+    Show them the old → new values and get confirmation before calling this.
+    (The ajouter skill never calls it — adding cards never modifies existing ones.)
+
+    Only the Front/Back fields change; deck, card type, scheduling, and tags are
+    untouched. The write is re-read to verify it persisted — AnkiConnect silently
+    skips notes open in the Browser/editor, so close it if this raises.
+    """
+    new = {k: v.strip() for k, v in (("Front", front), ("Back", back)) if v is not None}
+    if not new:
+        raise ValueError("give front and/or back")
+    if not all(new.values()):
+        raise ValueError("front and back must be non-empty when given")
+    if note_id not in anki("findNotes", query=f'deck:"{ROOT_DECK}" nid:{note_id}'):
+        raise ValueError(f"note {note_id} is not in the {ROOT_DECK!r} deck tree")
+
+    def fields():
+        f = anki("notesInfo", notes=[note_id])[0]["fields"]
+        return {k: f[k]["value"] for k in ("Front", "Back")}
+
+    old = fields()
+    anki("updateNoteFields", note={"id": note_id, "fields": new})
+    now = fields()
+    if any(now[k] != v for k, v in new.items()):
+        raise RuntimeError(f"note {note_id} did not update (is it open in the Anki Browser?)")
+    return {"note_id": note_id,
+            "old": {"front": clean(old["Front"]), "back": clean(old["Back"])},
+            "new": {"front": clean(now["Front"]), "back": clean(now["Back"])}}
 
 
 if __name__ == "__main__":

@@ -18,14 +18,20 @@ It also has an **`ajouter` skill** for *adding* cards from Claude Code — see
   lemmatize → duplicate check → find in-deck synonyms → `word_frequency` ranks the
   synonym group → most common gets `Basic (and reversed card)`, the rest get
   `Basic` (French→English only) → preview → add on confirmation. Existing cards
-  are never modified; reverse-card conflicts are only reported.
+  are never modified; reverse-card conflicts are only reported. Front/back
+  notation per category (fixed expression, verb, noun types, adjective dot
+  notation, adverb) lives in
+  [.claude/skills/ajouter/formatting.md](.claude/skills/ajouter/formatting.md).
 - [tools/anki_mcp.py](tools/anki_mcp.py) — stdio MCP server registered in
   [.mcp.json](.mcp.json). Tools: `list_decks`, `search_deck`, `word_frequency`,
-  `add_note`. Frequency code is copied from the notebook (cells [2], [2.5], [5]);
-  keep the two in sync if you change the lookup chain.
+  `add_note`, `update_note`. Frequency code is copied from the notebook (cells
+  [2], [2.5], [5]); keep the two in sync if you change the lookup chain.
 - **No delete, by design.** The user does not want Claude able to delete cards.
   `anki()` in the server enforces an `ALLOWED_ACTIONS` allowlist (read + `addNote`
-  only) — don't add delete, update, or suspend actions to it. A `PreToolUse` hook
+  + `updateNoteFields`) — don't add delete or suspend actions to it.
+  `update_note` only rewrites Front/Back of a note in the Français tree, re-reads
+  to verify, and is for fixes the user explicitly asks for; the `ajouter` skill
+  never modifies existing cards. A `PreToolUse` hook
   ([.claude/hooks/guard_anki.py](.claude/hooks/guard_anki.py), wired in
   [.claude/settings.json](.claude/settings.json)) blocks Bash commands that hit
   port 8765 directly and code that names AnkiConnect delete actions. It is
