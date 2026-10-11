@@ -46,7 +46,8 @@ they are verbs, not fixed expressions.
 ## 4. Nouns and noun phrases
 
 Pick the first type that fits: **proper → usually definite → plural-only →
-uncountable → countable**.
+uncountable → countable**. Decide from the bare noun; the article in the
+user's input doesn't count as evidence for the type (see SKILL.md step 1).
 
 | Type | Front | Examples |
 |---|---|---|
