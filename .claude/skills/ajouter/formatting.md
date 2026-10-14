@@ -128,5 +128,9 @@ As they are: `largement` · `longtemps` · `là-bas` · `du coup`
 | Adjective / adverb | the English word | `dry`, `largely` |
 | Fixed expression | the natural English equivalent | `one moment, please` |
 
+Gloss the **core meaning only**: 1–2 close English equivalents, no figurative or
+specialised senses (`abattre` → `to knock down, to cut down`). For words with
+several unrelated core meanings, see SKILL.md step 1.
+
 On a `fr_to_en` card you may add a contrast with the more common synonym:
 `to trust (≈ faire confiance à)`.
