@@ -1,7 +1,7 @@
 ---
 name: ajouter
 description: Add one or more French words or expressions to the user's Anki "Français" deck — lemmatize, check for duplicates, find near-synonyms already in the deck, and pick the card type so synonyms don't collide. Use when the user wants to add, create, or save French vocabulary / flashcards / cards to Anki.
-allowed-tools: mcp__anki__list_decks, mcp__anki__search_deck, mcp__anki__word_frequency
+allowed-tools: AskUserQuestion, mcp__anki__list_decks, mcp__anki__search_deck, mcp__anki__word_frequency
 ---
 
 The user wants to add this French vocabulary to Anki: **$ARGUMENTS**
@@ -29,6 +29,18 @@ Division of labour (do not blur it): **you** produce lemmas, glosses, and synony
 6. **Format like the existing deck.**
    Format the front and back by category, following [formatting.md](formatting.md) exactly — articles per noun type (`un.e citadin.e.s`, `de l'incompréhension`, `des vacances`, `la presse`), dot notation for adjectives (`blanc.he.s`, split as `beau.x (bel), belle.s`), infinitives for verb phrases (`ne pas arriver à y croire`), fixed expressions verbatim (`je vous en prie`), adverbs as is. Back: `a scar`, `incomprehension`, `to trust`. For a `fr_to_en` card, you may add a short contrast in parentheses with the more common synonym, e.g. `to trust (≈ faire confiance à)`.
 
-7. **Preview and confirm.** Show a table — Front | Back | Category | Card type | Deck | Synonym group with zipf scores | Reason — plus any duplicates skipped and conflicts found. If a front's article differs from the one the user typed, say so in Reason (e.g. "typed *la cicatrice*; countable → *une cicatrice.s*"). Ask the user to confirm (or edit) before adding anything.
+7. **Preview and confirm — always, with the `AskUserQuestion` tool.** First show a table — Front | Back | Category | Card type | Deck | Synonym group with zipf scores | Reason — plus any duplicates skipped and conflicts found. If a front's article differs from the one the user typed, say so in Reason (e.g. "typed *la cicatrice*; countable → *une cicatrice.s*").
 
-8. **Add.** Call `add_note` once per confirmed card. Report the resulting note ids and repeat any conflicts the user should fix by hand. New cards go to the end of the new-card queue; mention that the frequency-sort notebook can reorder them later.
+   Then confirm every card with the **`AskUserQuestion`** tool, never with a plain-text question in chat. Do this every time: for a single card, and even if the user said "just add it".
+   - Ask one question per card, naming the lemma, with the short lemma as the header (≤12 chars). The tool takes at most 4 questions per call, so if there are more than 4 cards, make several calls.
+   - Use single-select options. Each option has a `preview` showing the card exactly as it will be created:
+     ```
+     Front: un.e citadin.e.s
+     Back:  a city dweller
+     Type:  Basic (and reversed card)
+     Deck:  Français::Vocab
+     ```
+   - Options: **"Add as shown (Recommended)"** and **"Skip this card"**. If there's a real alternative (the other card type, a different article or gloss), add it as a third option with its own preview. The user can always pick "Other" to type edits.
+   - If the user edits a card, apply the edit and confirm the changed card again with `AskUserQuestion` before adding it.
+
+8. **Add.** Add only the cards the user approved through `AskUserQuestion` in step 7. Call `add_note` once per approved card, with exactly the Front, Back, card type, and deck shown in its approved preview. Report the resulting note ids and repeat any conflicts the user should fix by hand. New cards go to the end of the new-card queue; mention that the frequency-sort notebook can reorder them later.
