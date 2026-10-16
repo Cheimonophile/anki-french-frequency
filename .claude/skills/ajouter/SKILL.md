@@ -24,11 +24,15 @@ Division of labour (do not blur it): **you** produce lemmas, glosses, and synony
 
 4. **Find synonyms in the deck.** `search_deck` with your French synonyms on `field="front"`, and with the English glosses on `field="back"`. Keep only hits that really mean basically the same thing as the new word — discard loose matches (e.g. *se confier à* "to confide in" is not a synonym of *se fier à* "to trust"; *une confiance* "trust" is a noun, not a synonym of a verb).
 
-5. **Choose the card type.** The synonym group = the new word + the kept deck hits (+ any other new entries in this invocation that are synonyms of each other). Call `word_frequency` on every lemma in the group. Then:
-   - No synonyms, or the new word has the highest zipf in its group → `card_type: "both"` (Basic and reversed: French→English and English→French).
+5. **Choose the card type.** The synonym group = the new word + the kept deck hits (+ any other new entries in this invocation that are synonyms of each other). Call `word_frequency` on every lemma in the group. The group's **winner** is chosen this way:
+   - **Canadian usage first.** The user is learning French in Canada. If one member of the group is the usual Canadian (Québécois) term and the others are mainly European French (*fin de semaine* vs *week-end*, *courriel* vs *e-mail*), that member wins even if its zipf is lower, because Lexique's corpus is mostly European. Still show every zipf score, and say in Reason that Canadian usage overrode zipf (e.g. "Canadian usage; *week-end* has higher zipf in Lexique").
+   - Otherwise, the member with the highest zipf wins.
+   - Ties (same zipf): prefer the Canadian term, then the more idiomatic everyday expression, and say it was a tie.
+
+   Then:
+   - No synonyms, or the new word is the winner → `card_type: "both"` (Basic and reversed: French→English and English→French).
    - Otherwise → `card_type: "fr_to_en"` (Basic: French→English only), so English→French recall is never ambiguous.
-   - If the new word is the most common **and** an existing synonym's `model` is `Basic (and reversed card)`, add the new word as `both` and **report** the conflict: suggest the user suspend that existing note's reverse card in Anki. Do not change it yourself.
-   - Ties (same zipf): prefer the more idiomatic everyday expression and say it was a tie.
+   - If the new word is the winner **and** an existing synonym's `model` is `Basic (and reversed card)`, add the new word as `both` and **report** the conflict: suggest the user suspend that existing note's reverse card in Anki. Do not change it yourself.
 
 6. **Format like the existing deck.**
    Format the front and back by category, following [formatting.md](formatting.md) exactly — articles per noun type (`un.e citadin.e.s`, `de l'incompréhension`, `des vacances`, `la presse`), dot notation for adjectives (`blanc.he.s`, split as `beau.x (bel), belle.s`), infinitives for verb phrases (`ne pas arriver à y croire`), fixed expressions verbatim (`je vous en prie`), adverbs as is. Back: `a scar`, `incomprehension`, `to trust`. For a `fr_to_en` card, you may add a short contrast in parentheses with the more common synonym, e.g. `to trust (≈ faire confiance à)`.

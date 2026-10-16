@@ -12,11 +12,26 @@ repositions the cards through AnkiConnect's local HTTP API.
 It also has an **`ajouter` skill** for *adding* cards from Claude Code — see
 "Adding cards" below.
 
+## Learner context
+
+The user is learning French in Canada. Wherever there's a choice of vocabulary,
+favor Canadian (Québécois) French usage over European French — e.g. *courriel*
+over *e-mail*, *fin de semaine* over *week-end*, *magasiner* over *faire du
+shopping*, *déjeuner / dîner / souper* for breakfast / lunch / dinner. This
+applies to translations, glosses, example sentences, and suggested synonyms.
+When a word's meaning or register differs between Canada and France, give the
+Canadian sense first and note the difference.
+
+Lexique 3.83 frequencies come from a mostly-European corpus, so they won't
+reflect Canadian usage. Don't adjust the numbers to compensate — the corpus
+still produces the number (see Architecture).
+
 ## Adding cards: the `ajouter` skill and `anki` MCP server
 
 - [.claude/skills/ajouter/SKILL.md](.claude/skills/ajouter/SKILL.md) — workflow:
-  lemmatize → duplicate check → find in-deck synonyms → `word_frequency` ranks the
-  synonym group → most common gets `Basic (and reversed card)`, the rest get
+  lemmatize → duplicate check → find in-deck synonyms → pick the synonym group's
+  winner (the Canadian/Québécois term if there is one, otherwise the highest
+  `word_frequency` zipf) → winner gets `Basic (and reversed card)`, the rest get
   `Basic` (French→English only) → preview → add on confirmation. Existing cards
   are never modified; reverse-card conflicts are only reported. Front/back
   notation per category (fixed expression, verb, noun types, adjective dot
