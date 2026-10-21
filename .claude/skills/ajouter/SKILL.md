@@ -1,12 +1,12 @@
 ---
 name: ajouter
-description: Add one or more French words or expressions to the user's Anki "Français" deck — lemmatize, check for duplicates, find near-synonyms already in the deck, and pick the card type so synonyms don't collide. Use when the user wants to add, create, or save French vocabulary / flashcards / cards to Anki.
+description: Add one or more French words or expressions to the user's Anki "Français" deck — lemmatize, check for duplicates, find near-synonyms already in the deck, and pick the card type so synonyms don't collide. Use when the user wants to add, create, or save French vocabulary / flashcards / cards to Anki, or to suspend or unsuspend one of its cards.
 allowed-tools: AskUserQuestion, mcp__anki__list_decks, mcp__anki__search_deck, mcp__anki__word_frequency
 ---
 
 The user wants to add this French vocabulary to Anki: **$ARGUMENTS**
 
-Tools come from the `anki` MCP server: `list_decks`, `search_deck`, `word_frequency`, `add_note`. There is no delete tool, by design. The server's `update_note` tool exists only for fixes the user explicitly asks for (see "Editing an existing card" below) — this skill **never** changes existing cards on its own initiative, never suspends or deletes them, and never talks to AnkiConnect any other way. If a tool errors with a connection failure, tell the user to open Anki.
+Tools come from the `anki` MCP server: `list_decks`, `search_deck`, `word_frequency`, `add_note`, `suspend_card`, `unsuspend_card`. There is no delete tool, by design. The server's `update_note` tool exists only for fixes the user explicitly asks for (see "Editing an existing card" below) — this skill **never** changes existing cards on its own initiative: it suspends a card only when the user approves it in step 7 or asks for it (see "Suspending or unsuspending a card" below), never deletes, and never talks to AnkiConnect any other way. If a tool errors with a connection failure, tell the user to open Anki.
 
 Division of labour (do not blur it): **you** produce lemmas, glosses, and synonym candidates; **`word_frequency`** produces every frequency number. Never estimate frequency yourself.
 
@@ -38,7 +38,7 @@ Division of labour (do not blur it): **you** produce lemmas, glosses, and synony
    Then:
    - No synonyms, or the new word is the winner → `card_type: "both"` (Basic and reversed: French→English and English→French).
    - Otherwise → `card_type: "fr_to_en"` (Basic: French→English only), so English→French recall is never ambiguous.
-   - If the new word is the winner **and** an existing synonym's `model` is `Basic (and reversed card)`, add the new word as `both` and **report** the conflict: suggest the user suspend that existing note's reverse card in Anki. Do not change it yourself.
+   - If the new word is the winner **and** an existing synonym's `model` is `Basic (and reversed card)`, add the new word as `both`. That synonym's reverse card now competes for the same English prompt, so make it a **suspend candidate** for step 7 — unless its search hit already lists `en_to_fr` in `suspended`.
 
 6. **Format like the existing deck.**
    Format the front and back by category, following [formatting.md](formatting.md) exactly — articles per noun type (`un.e citadin.e.s`, `de l'incompréhension`, `des vacances`, `la presse`), dot notation for adjectives (`blanc.he.s`, split as `beau.x (bel), belle.s`), infinitives for verb phrases (`ne pas arriver à y croire`), fixed expressions verbatim (`je vous en prie`), adverbs as is. Back: `a scar`, `incomprehension`, `to trust`. For a `fr_to_en` card, you may add a short contrast in parentheses with the more common synonym, e.g. `to trust (≈ faire confiance à)`.
@@ -56,8 +56,16 @@ Division of labour (do not blur it): **you** produce lemmas, glosses, and synony
      ```
    - Options: **"Add as shown (Recommended)"** and **"Skip this card"**. If there's a real alternative (the other card type, a different article or gloss), add it as a third option with its own preview. The user can always pick "Other" to type edits.
    - If the user edits a card, apply the edit and confirm the changed card again with `AskUserQuestion` before adding it.
+   - For each suspend candidate (step 5), ask one more question in the same calls, with the synonym's short front as the header. Its preview shows the existing note:
+     ```
+     Front: percuter
+     Back:  to hit; to crash into
+     Deck:  Français::2 Vie Quotidienne
+     Reverse card (English→French): active → suspended
+     ```
+     Options: **"Suspend reverse card (Recommended)"** and **"Leave it active"**. These questions count toward the 4-per-call limit.
 
-8. **Add.** Add only the cards the user approved through `AskUserQuestion` in step 7. Call `add_note` once per approved card, with exactly the Front, Back, card type, and deck shown in its approved preview. Report the resulting note ids and repeat any conflicts the user should fix by hand. New cards go to the end of the new-card queue; mention that the frequency-sort notebook can reorder them later.
+8. **Add.** Add only the cards the user approved through `AskUserQuestion` in step 7. Call `add_note` once per approved card, with exactly the Front, Back, card type, and deck shown in its approved preview. Then call `suspend_card(note_id, "en_to_fr")` for each suspend candidate the user approved whose new card was added. Report the resulting note ids and each suspension (front, `was_suspended → suspended`). A candidate the user left active is still a conflict: mention it once more. New cards go to the end of the new-card queue; mention that the frequency-sort notebook can reorder them later.
 
 ## Editing an existing card
 
@@ -73,3 +81,11 @@ Only when the user explicitly asks to change a specific existing note (a new glo
    ```
    Options: **"Update as shown (Recommended)"**, **"Only the requested change"** (keeps the old notation; preview it), and **"Don't change it"**.
 5. **Update.** Call `update_note` with exactly the approved fields and report old → new from its result. If it raises because the note didn't change, tell the user to close the Anki Browser and retry.
+
+## Suspending or unsuspending a card
+
+Only when the user asks to suspend or unsuspend a specific card (e.g. "suspend the reverse of *percuter*"). The request is the confirmation, and the change is reversible.
+
+1. **Find the note** with `search_deck` on `field="front"`. If more than one note could be the one meant, ask with `AskUserQuestion` which.
+2. **Pick the card.** "Reverse", "English→French", or no card named on a `Basic (and reversed card)` note → `en_to_fr`. "Forward" or "French→English" → `fr_to_en`. A `Basic` note has only `fr_to_en`.
+3. **Call** `suspend_card` or `unsuspend_card` and report the front, the card, and `was_suspended → suspended` from its result.

@@ -2,7 +2,7 @@
 """PreToolUse guard: keep Claude away from AnkiConnect except via the anki MCP server.
 
 The MCP server (tools/anki_mcp.py) only allows read + add + Front/Back field
-edits — never delete or suspend. This hook closes the
+edits + suspend/unsuspend — never delete. This hook closes the
 obvious side doors:
   - Bash commands that talk to AnkiConnect directly (port 8765) or name a
     delete action, e.g. `curl localhost:8765 -d '{"action": ...}'`.

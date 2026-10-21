@@ -33,22 +33,27 @@ still produces the number (see Architecture).
   winner (the Canadian/Québécois term if there is one, otherwise the highest
   `word_frequency` zipf) → winner gets `Basic (and reversed card)`, the rest get
   `Basic` (French→English only) → preview → add on confirmation. Existing cards
-  are never modified; reverse-card conflicts are only reported. Front/back
+  are never modified on the skill's own initiative; for a reverse-card conflict
+  it asks whether to suspend the other synonym's reverse card. Front/back
   notation per category (fixed expression, verb, noun types, adjective dot
   notation, adverb) lives in
   [.claude/skills/ajouter/formatting.md](.claude/skills/ajouter/formatting.md).
 - [tools/anki_mcp.py](tools/anki_mcp.py) — stdio MCP server registered in
   [.mcp.json](.mcp.json). Tools: `list_decks`, `search_deck`, `word_frequency`,
-  `add_note`, `update_note`. Frequency code is copied from the notebook (cells
+  `add_note`, `update_note`, `suspend_card`, `unsuspend_card`. Frequency code is
+  copied from the notebook (cells
   [2], [2.5], [5]); keep the two in sync if you change the lookup chain.
 - **No delete, by design.** The user does not want Claude able to delete cards.
   `anki()` in the server enforces an `ALLOWED_ACTIONS` allowlist (read + `addNote`
-  + `updateNoteFields`) — don't add delete or suspend actions to it.
+  + `updateNoteFields` + `suspend`/`unsuspend`) — don't add delete actions to it.
   `update_note` only rewrites Front/Back of a note in the Français tree, re-reads
   to verify, and is for fixes the user explicitly asks for; the `ajouter` skill
   never modifies existing cards on its own, and when the user asks for an edit it
   also rewrites old-notation fronts (`une part parts` → `une part.s`) in the same
-  confirmed update. A `PreToolUse` hook
+  confirmed update. `suspend_card` / `unsuspend_card` change one card of a note
+  in the Français tree (`en_to_fr` = Card 2, the reverse; `fr_to_en` = Card 1),
+  re-read it to verify, and run only when the user asks or approves; each
+  `search_deck` hit lists which of its cards are `suspended`. A `PreToolUse` hook
   ([.claude/hooks/guard_anki.py](.claude/hooks/guard_anki.py), wired in
   [.claude/settings.json](.claude/settings.json)) blocks Bash commands that hit
   port 8765 directly and code that names AnkiConnect delete actions. It is

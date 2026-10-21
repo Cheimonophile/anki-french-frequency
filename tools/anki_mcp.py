@@ -1,9 +1,10 @@
-"""Anki MCP server — lets Claude Code search the Français deck, add cards, and
-fix the Front/Back text of existing ones.
+"""Anki MCP server — lets Claude Code search the Français deck, add cards, fix
+the Front/Back text of existing ones, and suspend or unsuspend single cards.
 
-Exposes five tools: list_decks, search_deck, word_frequency, add_note, update_note.
-There is deliberately NO way to delete or suspend anything: anki() only
-forwards actions in ALLOWED_ACTIONS, so even a bug can't reach a delete action.
+Exposes seven tools: list_decks, search_deck, word_frequency, add_note,
+update_note, suspend_card, unsuspend_card. There is deliberately NO way to
+delete anything: anki() only forwards actions in ALLOWED_ACTIONS, so even a bug
+can't reach a delete action.
 
 Same division of labour as the notebook: Claude (the caller) produces lemmas,
 Lexique 3.83 produces frequency numbers, AnkiConnect reads/writes cards.
@@ -26,10 +27,12 @@ LEXIQUE_TSV = Path(os.environ.get("LEXIQUE_TSV", ROOT / "Lexique383.tsv"))
 LEXIQUE_COL = "freqlemfilms2"         # subtitles/everyday; "freqlemlivres" = books
 ADDED_TAG   = "claude-added"
 MODELS      = {"both": "Basic (and reversed card)", "fr_to_en": "Basic"}
+DIRECTIONS  = {"fr_to_en": 0, "en_to_fr": 1}   # card ord: Card 1 = Front→Back, Card 2 = Back→Front
 
-# Read + add + Front/Back field edits. Never add a delete/suspend action here.
-ALLOWED_ACTIONS = frozenset({"version", "deckNames", "findNotes", "notesInfo", "addNote",
-                             "updateNoteFields"})
+# Read + add + Front/Back field edits + suspend/unsuspend. Never add a delete action here.
+ALLOWED_ACTIONS = frozenset({"version", "deckNames", "findNotes", "notesInfo", "findCards",
+                             "cardsInfo", "addNote", "updateNoteFields", "suspend",
+                             "unsuspend"})
 
 mcp = MCPServer("anki")
 
@@ -118,13 +121,16 @@ def search_deck(terms: list[str],
     field text. Front is French, Back is English. Use French lemmas/synonyms with
     field="front" and English glosses with field="back".
 
-    Each hit has: note_id, deck, model, front, back, tags, matched_term, and
-    exact — true when the Front, minus its article and gender/plural markers
-    ("un.e citadin.e.s" -> "citadin"), equals the term exactly (i.e. very
-    likely a duplicate).
+    Each hit has: note_id, deck, model, front, back, tags, matched_term,
+    suspended — which of the note's cards are suspended ("fr_to_en" = Card 1,
+    "en_to_fr" = Card 2) — and exact — true when the Front, minus its article
+    and gender/plural markers ("un.e citadin.e.s" -> "citadin"), equals the
+    term exactly (i.e. very likely a duplicate).
     """
     notes = anki("notesInfo", notes=anki("findNotes", query=f'deck:"{ROOT_DECK}"'))
     decks = _note_decks()
+    suspended = {d: set(anki("findNotes", query=f'deck:"{ROOT_DECK}" card:{o + 1} is:suspended'))
+                 for d, o in DIRECTIONS.items()}
 
     wanted = [(t, fold(t), front_key(t)) for t in terms if t.strip()]
     hits = []
@@ -142,6 +148,7 @@ def search_deck(terms: list[str],
                     "model": n["modelName"],
                     "front": front, "back": back, "tags": n["tags"],
                     "matched_term": term,
+                    "suspended": [d for d, nids in suspended.items() if n["noteId"] in nids],
                     "exact": front_key(front) == fk,
                 })
                 break
@@ -201,6 +208,11 @@ def add_note(deck: str, front: str, back: str,
             "front": front.strip(), "back": back.strip()}
 
 
+def _check_note(note_id):            # refuse notes outside the Français tree
+    if note_id not in anki("findNotes", query=f'deck:"{ROOT_DECK}" nid:{note_id}'):
+        raise ValueError(f"note {note_id} is not in the {ROOT_DECK!r} deck tree")
+
+
 @mcp.tool()
 def update_note(note_id: int, front: str | None = None, back: str | None = None) -> dict:
     """Change the Front and/or Back text of one existing note in a Français deck.
@@ -219,8 +231,7 @@ def update_note(note_id: int, front: str | None = None, back: str | None = None)
         raise ValueError("give front and/or back")
     if not all(new.values()):
         raise ValueError("front and back must be non-empty when given")
-    if note_id not in anki("findNotes", query=f'deck:"{ROOT_DECK}" nid:{note_id}'):
-        raise ValueError(f"note {note_id} is not in the {ROOT_DECK!r} deck tree")
+    _check_note(note_id)
 
     def fields():
         f = anki("notesInfo", notes=[note_id])[0]["fields"]
@@ -234,6 +245,54 @@ def update_note(note_id: int, front: str | None = None, back: str | None = None)
     return {"note_id": note_id,
             "old": {"front": clean(old["Front"]), "back": clean(old["Back"])},
             "new": {"front": clean(now["Front"]), "back": clean(now["Back"])}}
+
+
+def _set_suspended(note_id, direction, suspend):
+    _check_note(note_id)
+    cards = anki("cardsInfo", cards=anki("findCards", query=f'deck:"{ROOT_DECK}" nid:{note_id}'))
+    card = next((c for c in cards if c["ord"] == DIRECTIONS[direction]), None)
+    if card is None:
+        model = cards[0]["modelName"] if cards else "unknown model"
+        raise ValueError(f"note {note_id} ({model}) has no {direction} card")
+    cid, was = card["cardId"], card["queue"] == -1      # queue -1 = suspended
+    if was != suspend:
+        anki("suspend" if suspend else "unsuspend", cards=[cid])
+        if (anki("cardsInfo", cards=[cid])[0]["queue"] == -1) != suspend:
+            raise RuntimeError(f"card {cid} of note {note_id} did not change")
+    f = anki("notesInfo", notes=[note_id])[0]["fields"]
+    return {"note_id": note_id, "card_id": cid, "direction": direction,
+            "front": clean(f.get("Front", {}).get("value", "")),
+            "back": clean(f.get("Back", {}).get("value", "")),
+            "was_suspended": was, "suspended": suspend}
+
+
+@mcp.tool()
+def suspend_card(note_id: int,
+                 direction: Literal["fr_to_en", "en_to_fr"] = "en_to_fr") -> dict:
+    """Suspend one card of a note in a Français deck, so Anki stops showing it.
+
+    direction "en_to_fr" -> Card 2, the English→French reverse card of a
+                            "Basic (and reversed card)" note. The usual case:
+                            a more common synonym owns that English prompt.
+              "fr_to_en" -> Card 1, the French→English card.
+
+    Use only when the user asks to suspend a specific card, or approves it in an
+    ajouter conflict question. Reversible with unsuspend_card. Only the card's
+    suspended state changes; fields, tags, and scheduling are untouched. A card
+    that is already suspended is left alone (was_suspended: true). The write is
+    re-read to verify it persisted.
+    """
+    return _set_suspended(note_id, direction, True)
+
+
+@mcp.tool()
+def unsuspend_card(note_id: int,
+                   direction: Literal["fr_to_en", "en_to_fr"] = "en_to_fr") -> dict:
+    """Unsuspend one card of a note in a Français deck — the undo of suspend_card.
+
+    Same direction values as suspend_card. Use only when the user asks.
+    """
+    return _set_suspended(note_id, direction, False)
 
 
 if __name__ == "__main__":
