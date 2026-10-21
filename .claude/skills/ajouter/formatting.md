@@ -145,5 +145,10 @@ Gloss the **core meaning only**: 1–2 close English equivalents, no figurative 
 specialised senses (`abattre` → `to knock down, to cut down`). For words with
 several unrelated core meanings, see SKILL.md step 1.
 
+A sense that exists only in a context goes on its own context card (SKILL.md
+step 1), with the English for the whole phrase and no parentheses:
+`répondre au téléphone` → `to answer the phone; to pick up the phone`. The base
+card keeps the core meaning: `décrocher` → `to unhook`.
+
 On a `fr_to_en` card you may add a contrast with the more common synonym:
 `to trust (≈ faire confiance à)`.
