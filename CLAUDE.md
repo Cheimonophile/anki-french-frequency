@@ -46,7 +46,9 @@ still produces the number (see Architecture).
   + `updateNoteFields`) — don't add delete or suspend actions to it.
   `update_note` only rewrites Front/Back of a note in the Français tree, re-reads
   to verify, and is for fixes the user explicitly asks for; the `ajouter` skill
-  never modifies existing cards. A `PreToolUse` hook
+  never modifies existing cards on its own, and when the user asks for an edit it
+  also rewrites old-notation fronts (`une part parts` → `une part.s`) in the same
+  confirmed update. A `PreToolUse` hook
   ([.claude/hooks/guard_anki.py](.claude/hooks/guard_anki.py), wired in
   [.claude/settings.json](.claude/settings.json)) blocks Bash commands that hit
   port 8765 directly and code that names AnkiConnect delete actions. It is

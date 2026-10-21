@@ -1,10 +1,23 @@
 # Front formatting rules
 
 How to write the French front (and English back) of a new card. Most examples
-are real cards from the deck (a few, like `Paris` or `un œil, des yeux`, are
+are real cards from the deck (a few, like `Paris` or `un œil<br>yeux`, are
 illustrations). Follow the **recent** notation shown here; older
 cards use `/s`, `(s)`, or both forms spelled out (`un fouet fouets`) — don't
-copy those.
+copy those. When an existing card is edited, rewrite its old notation:
+
+## Old notation → current
+
+| Old | Current | Example |
+|---|---|---|
+| plural spelled out | `.s` / `.x` marker | `une part parts` → `une part.s`, `un cadeau cadeaux` → `un cadeau.x` |
+| `/s`, `(s)` | `.s` | `une fête/s` → `une fête.s` |
+| `un/e`, `un(e)`, `/e`, `(e)` | `un.e`, `.e` | `un(e) photographe(s)` → `un.e photographe.s`, `un/e graphiste/s` → `un.e graphiste.s` |
+| all four adjective forms spelled out | dot notation, or split form (§5) | `inhabituel, inhabituelle inhabituels, inhabituelles` → `inhabituel.le.s` |
+| article missing or wrong for the noun's type | article per §4 | `participant/e/s` → `un.e participant.e.s` |
+
+Irregular plurals keep the plural on its own line (`un œil<br>yeux`, §4), and
+adjectives that need it keep the split form (`beau.x (bel), belle.s`).
 
 ## 1. Classify the whole entry
 
@@ -66,7 +79,7 @@ user's input doesn't count as evidence for the type (see SKILL.md step 1).
 | ‑eau, ‑eu, ‑ou (‑oux) → + x | `.x` | `un cadeau.x`, `un jeu.x`, `un bijou.x`, `un genou.x` |
 | ‑al, ‑ail → ‑aux | `.x` (deck convention) | `un animal.x`, `un éditorial.x`, `un travail.x` |
 | already ends in ‑s / ‑x / ‑z | no marker | `un pays`, `un prix`, `un nez` |
-| irregular | both forms side by side | `un œil, des yeux` |
+| irregular | singular, then the bare plural (no article) on a second line — write the break as `<br>` in the field | `un œil<br>yeux` |
 | compounds | mark every part that pluralizes; *de*-complements stay singular | `un beau.x-père.s`, `une basse.s-cour.s`, `une proposition.s relative.s`, `un jeu.x de société`, `une barrière.s linguistique.s` |
 
 ### Both-gender nouns (people)

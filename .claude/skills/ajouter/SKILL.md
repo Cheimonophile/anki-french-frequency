@@ -6,7 +6,7 @@ allowed-tools: AskUserQuestion, mcp__anki__list_decks, mcp__anki__search_deck, m
 
 The user wants to add this French vocabulary to Anki: **$ARGUMENTS**
 
-Tools come from the `anki` MCP server: `list_decks`, `search_deck`, `word_frequency`, `add_note`. There is no delete tool, by design. The server's `update_note` tool exists only for fixes the user explicitly asks for — this skill **never** changes, suspends, or deletes existing cards, and never talks to AnkiConnect any other way. If a tool errors with a connection failure, tell the user to open Anki.
+Tools come from the `anki` MCP server: `list_decks`, `search_deck`, `word_frequency`, `add_note`. There is no delete tool, by design. The server's `update_note` tool exists only for fixes the user explicitly asks for (see "Editing an existing card" below) — this skill **never** changes existing cards on its own initiative, never suspends or deletes them, and never talks to AnkiConnect any other way. If a tool errors with a connection failure, tell the user to open Anki.
 
 Division of labour (do not blur it): **you** produce lemmas, glosses, and synonym candidates; **`word_frequency`** produces every frequency number. Never estimate frequency yourself.
 
@@ -20,7 +20,7 @@ Division of labour (do not blur it): **you** produce lemmas, glosses, and synony
 
 2. **Ask for the subdeck** — once per invocation. Call `list_decks` and ask with AskUserQuestion which deck the new cards go into.
 
-3. **Duplicate check.** `search_deck` with the lemma (and the entry as written) on `field="front"`. Matching is substring-based, so search the bare masculine stem — `citadin` finds `un.e citadin.e.s`, `citadine` does not. Any hit with `exact: true` is a duplicate: report it (front, back, deck) and skip that entry unless the user asks to add it anyway. Also mention close non-exact hits that look like the same word.
+3. **Duplicate check.** `search_deck` with the lemma (and the entry as written) on `field="front"`. Matching is substring-based, so search the bare masculine stem — `citadin` finds `un.e citadin.e.s`, `citadine` does not. Any hit with `exact: true` is a duplicate: report it (front, back, deck) and skip that entry unless the user asks to add it anyway. Also mention close non-exact hits that look like the same word. If a reported hit's front uses old notation (see formatting.md, "Old notation → current"), say in one line that it can be reformatted if the user wants; don't offer more than that.
 
 4. **Find synonyms in the deck.** `search_deck` with your French synonyms on `field="front"`, and with the English glosses on `field="back"`. Keep only hits that really mean basically the same thing as the new word — discard loose matches (e.g. *se confier à* "to confide in" is not a synonym of *se fier à* "to trust"; *une confiance* "trust" is a noun, not a synonym of a verb).
 
@@ -52,3 +52,18 @@ Division of labour (do not blur it): **you** produce lemmas, glosses, and synony
    - If the user edits a card, apply the edit and confirm the changed card again with `AskUserQuestion` before adding it.
 
 8. **Add.** Add only the cards the user approved through `AskUserQuestion` in step 7. Call `add_note` once per approved card, with exactly the Front, Back, card type, and deck shown in its approved preview. Report the resulting note ids and repeat any conflicts the user should fix by hand. New cards go to the end of the new-card queue; mention that the frequency-sort notebook can reorder them later.
+
+## Editing an existing card
+
+Only when the user explicitly asks to change a specific existing note (a new gloss, a removed sense, a fixed front). Never edit a card just because it showed up as a duplicate or synonym hit.
+
+1. **Apply the requested change** to Front and/or Back.
+2. **Normalize the front to current notation** in the same edit, even if the user only asked about the back: re-classify the entry (formatting.md §1, §4) and rewrite old markers per formatting.md, "Old notation → current" — e.g. `une part parts` → `une part.s`, `un(e) photographe(s)` → `un.e photographe.s`, `une fête/s` → `une fête.s`, `inhabituel, inhabituelle inhabituels, inhabituelles` → `inhabituel.le.s`, `participant/e/s` → `un.e participant.e.s`. Normalize the back's *form* only where §7 calls for it (`graphic artist` → `a graphic artist` on a countable noun); don't change its meaning beyond what the user asked — propose any sense change as a separate option.
+3. **Duplicate check on the new front.** `search_deck` with the bare stem on `field="front"`. If a *different* note already has the normalized front (`exact: true`), report it and keep the old notation rather than create a duplicate front.
+4. **Confirm with `AskUserQuestion`**, one question per note. The preview shows `old → new` for each changed field and marks the reformatting apart from the requested change:
+   ```
+   Front: une part parts  →  une part.s   (notation)
+   Back:  a share a piece; a slice  →  a piece; a slice (of cake, pizza)
+   ```
+   Options: **"Update as shown (Recommended)"**, **"Only the requested change"** (keeps the old notation; preview it), and **"Don't change it"**.
+5. **Update.** Call `update_note` with exactly the approved fields and report old → new from its result. If it raises because the note didn't change, tell the user to close the Anki Browser and retry.
