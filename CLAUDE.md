@@ -40,12 +40,13 @@ still produces the number (see Architecture).
   [.claude/skills/ajouter/formatting.md](.claude/skills/ajouter/formatting.md).
 - [tools/anki_mcp.py](tools/anki_mcp.py) — stdio MCP server registered in
   [.mcp.json](.mcp.json). Tools: `list_decks`, `search_deck`, `word_frequency`,
-  `add_note`, `update_note`, `suspend_card`, `unsuspend_card`. Frequency code is
-  copied from the notebook (cells
+  `add_note`, `update_note`, `suspend_card`, `unsuspend_card`, `change_deck`.
+  Frequency code is copied from the notebook (cells
   [2], [2.5], [5]); keep the two in sync if you change the lookup chain.
 - **No delete, by design.** The user does not want Claude able to delete cards.
   `anki()` in the server enforces an `ALLOWED_ACTIONS` allowlist (read + `addNote`
-  + `updateNoteFields` + `suspend`/`unsuspend`) — don't add delete actions to it.
+  + `updateNoteFields` + `suspend`/`unsuspend` + `changeDeck`) — don't add delete
+  actions to it.
   `update_note` only rewrites Front/Back of a note in the Français tree, re-reads
   to verify, and is for fixes the user explicitly asks for; the `ajouter` skill
   never modifies existing cards on its own, and when the user asks for an edit it
@@ -53,7 +54,10 @@ still produces the number (see Architecture).
   confirmed update. `suspend_card` / `unsuspend_card` change one card of a note
   in the Français tree (`en_to_fr` = Card 2, the reverse; `fr_to_en` = Card 1),
   re-read it to verify, and run only when the user asks or approves; each
-  `search_deck` hit lists which of its cards are `suspended`. A `PreToolUse` hook
+  `search_deck` hit lists which of its cards are `suspended`. `change_deck` moves
+  whole notes (all their cards) between existing decks in the Français tree —
+  it refuses a deck that doesn't exist, because AnkiConnect's `changeDeck` would
+  create it — re-reads to verify, and runs only when the user asks. A `PreToolUse` hook
   ([.claude/hooks/guard_anki.py](.claude/hooks/guard_anki.py), wired in
   [.claude/settings.json](.claude/settings.json)) blocks Bash commands that hit
   port 8765 directly and code that names AnkiConnect delete actions. It is

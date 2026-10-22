@@ -1,10 +1,11 @@
 """Anki MCP server — lets Claude Code search the Français deck, add cards, fix
-the Front/Back text of existing ones, and suspend or unsuspend single cards.
+the Front/Back text of existing ones, suspend or unsuspend single cards, and
+move notes between Français decks.
 
-Exposes seven tools: list_decks, search_deck, word_frequency, add_note,
-update_note, suspend_card, unsuspend_card. There is deliberately NO way to
-delete anything: anki() only forwards actions in ALLOWED_ACTIONS, so even a bug
-can't reach a delete action.
+Exposes eight tools: list_decks, search_deck, word_frequency, add_note,
+update_note, suspend_card, unsuspend_card, change_deck. There is deliberately
+NO way to delete anything: anki() only forwards actions in ALLOWED_ACTIONS, so
+even a bug can't reach a delete action.
 
 Same division of labour as the notebook: Claude (the caller) produces lemmas,
 Lexique 3.83 produces frequency numbers, AnkiConnect reads/writes cards.
@@ -29,10 +30,10 @@ ADDED_TAG   = "claude-added"
 MODELS      = {"both": "Basic (and reversed card)", "fr_to_en": "Basic"}
 DIRECTIONS  = {"fr_to_en": 0, "en_to_fr": 1}   # card ord: Card 1 = Front→Back, Card 2 = Back→Front
 
-# Read + add + Front/Back field edits + suspend/unsuspend. Never add a delete action here.
+# Read + add + Front/Back field edits + suspend/unsuspend + deck moves. Never add a delete action here.
 ALLOWED_ACTIONS = frozenset({"version", "deckNames", "findNotes", "notesInfo", "findCards",
                              "cardsInfo", "addNote", "updateNoteFields", "suspend",
-                             "unsuspend"})
+                             "unsuspend", "changeDeck"})
 
 mcp = MCPServer("anki")
 
@@ -190,10 +191,7 @@ def add_note(deck: str, front: str, back: str,
     The note is tagged "claude-added". Anki rejects exact duplicates of Front.
     Show the user the card and get their confirmation before calling this.
     """
-    if deck != ROOT_DECK and not deck.startswith(ROOT_DECK + "::"):
-        raise ValueError(f"deck must be {ROOT_DECK!r} or one of its subdecks, got {deck!r}")
-    if deck not in list_decks():
-        raise ValueError(f"deck {deck!r} does not exist; choose one of {list_decks()}")
+    _check_deck(deck)
     if not front.strip() or not back.strip():
         raise ValueError("front and back must both be non-empty")
     note_id = anki("addNote", note={
@@ -206,6 +204,13 @@ def add_note(deck: str, front: str, back: str,
     })
     return {"note_id": note_id, "deck": deck, "model": MODELS[card_type],
             "front": front.strip(), "back": back.strip()}
+
+
+def _check_deck(deck):               # refuse decks outside the Français tree or not yet created
+    if deck != ROOT_DECK and not deck.startswith(ROOT_DECK + "::"):
+        raise ValueError(f"deck must be {ROOT_DECK!r} or one of its subdecks, got {deck!r}")
+    if deck not in list_decks():
+        raise ValueError(f"deck {deck!r} does not exist; choose one of {list_decks()}")
 
 
 def _check_note(note_id):            # refuse notes outside the Français tree
@@ -293,6 +298,42 @@ def unsuspend_card(note_id: int,
     Same direction values as suspend_card. Use only when the user asks.
     """
     return _set_suspended(note_id, direction, False)
+
+
+@mcp.tool()
+def change_deck(note_ids: list[int], deck: str) -> list[dict]:
+    """Move whole notes (all their cards) to another deck in the Français tree.
+
+    Use only when the user asks to move specific cards, e.g. ones just added to
+    the wrong subdeck. The target must be an existing deck from list_decks —
+    AnkiConnect would otherwise create it. Only the deck changes; fields, tags,
+    card type, suspension, and scheduling are untouched. Reversible by moving
+    the notes back. The write is re-read to verify it persisted.
+    """
+    _check_deck(deck)
+    if not note_ids:
+        raise ValueError("give at least one note id")
+    for nid in note_ids:              # check every note before moving any
+        _check_note(nid)
+    query = f'deck:"{ROOT_DECK}" nid:{",".join(map(str, note_ids))}'
+    cards = anki("cardsInfo", cards=anki("findCards", query=query))
+    old = {}
+    for c in cards:
+        old.setdefault(c["note"], set()).add(c["deckName"])
+    cids = [c["cardId"] for c in cards]
+    anki("changeDeck", cards=cids, deck=deck)
+    stray = [c["cardId"] for c in anki("cardsInfo", cards=cids) if c["deckName"] != deck]
+    if stray:
+        raise RuntimeError(f"cards {stray} did not move to {deck!r}")
+    out = []
+    for n in anki("notesInfo", notes=note_ids):
+        f = n["fields"]
+        out.append({"note_id": n["noteId"],
+                    "front": clean(f.get("Front", {}).get("value", "")),
+                    "back": clean(f.get("Back", {}).get("value", "")),
+                    "old_deck": ", ".join(sorted(old.get(n["noteId"], ()))),
+                    "deck": deck})
+    return out
 
 
 if __name__ == "__main__":

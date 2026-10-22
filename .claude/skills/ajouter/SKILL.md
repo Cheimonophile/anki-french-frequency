@@ -1,12 +1,12 @@
 ---
 name: ajouter
-description: Add one or more French words or expressions to the user's Anki "Français" deck — lemmatize, check for duplicates, find near-synonyms already in the deck, and pick the card type so synonyms don't collide. Use when the user wants to add, create, or save French vocabulary / flashcards / cards to Anki, or to suspend or unsuspend one of its cards.
+description: Add one or more French words or expressions to the user's Anki "Français" deck — lemmatize, check for duplicates, find near-synonyms already in the deck, and pick the card type so synonyms don't collide. Use when the user wants to add, create, or save French vocabulary / flashcards / cards to Anki, or to suspend, unsuspend, or move one of its cards.
 allowed-tools: AskUserQuestion, mcp__anki__list_decks, mcp__anki__search_deck, mcp__anki__word_frequency
 ---
 
 The user wants to add this French vocabulary to Anki: **$ARGUMENTS**
 
-Tools come from the `anki` MCP server: `list_decks`, `search_deck`, `word_frequency`, `add_note`, `suspend_card`, `unsuspend_card`. There is no delete tool, by design. The server's `update_note` tool exists only for fixes the user explicitly asks for (see "Editing an existing card" below) — this skill **never** changes existing cards on its own initiative: it suspends a card only when the user approves it in step 7 or asks for it (see "Suspending or unsuspending a card" below), never deletes, and never talks to AnkiConnect any other way. If a tool errors with a connection failure, tell the user to open Anki.
+Tools come from the `anki` MCP server: `list_decks`, `search_deck`, `word_frequency`, `add_note`, `suspend_card`, `unsuspend_card`, `change_deck`. There is no delete tool, by design. The server's `update_note` tool exists only for fixes the user explicitly asks for (see "Editing an existing card" below) — this skill **never** changes existing cards on its own initiative: it suspends a card only when the user approves it in step 7 or asks for it (see "Suspending or unsuspending a card" below), moves notes to another deck only when the user asks (see "Moving a card to another deck" below), never deletes, and never talks to AnkiConnect any other way. If a tool errors with a connection failure, tell the user to open Anki.
 
 Division of labour (do not blur it): **you** produce lemmas, glosses, and synonym candidates; **`word_frequency`** produces every frequency number. Never estimate frequency yourself.
 
@@ -89,3 +89,11 @@ Only when the user asks to suspend or unsuspend a specific card (e.g. "suspend t
 1. **Find the note** with `search_deck` on `field="front"`. If more than one note could be the one meant, ask with `AskUserQuestion` which.
 2. **Pick the card.** "Reverse", "English→French", or no card named on a `Basic (and reversed card)` note → `en_to_fr`. "Forward" or "French→English" → `fr_to_en`. A `Basic` note has only `fr_to_en`.
 3. **Call** `suspend_card` or `unsuspend_card` and report the front, the card, and `was_suspended → suspended` from its result.
+
+## Moving a card to another deck
+
+Only when the user asks to move specific notes to another deck (e.g. "put these in Vie Quotidienne" after adding them to the wrong one). The request is the confirmation, and the change is reversible. A note moves whole — both its cards.
+
+1. **Find the notes.** Use the note ids from this session's `add_note` results, or `search_deck` on `field="front"`. If it's unclear which notes are meant, ask with `AskUserQuestion`.
+2. **Pick the deck** from `list_decks`. If the user's name for it matches more than one deck, ask which.
+3. **Call** `change_deck` once with all the note ids, and report the front and `old_deck → deck` for each note from its result. If it raises because cards didn't move, tell the user to close the Anki Browser and retry.
