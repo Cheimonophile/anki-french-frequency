@@ -34,9 +34,11 @@ still produces the number (see Architecture).
   `word_frequency` zipf) → winner gets `Basic (and reversed card)`, the rest get
   `Basic` (French→English only) → preview → add on confirmation. Existing cards
   are never modified on the skill's own initiative; for a reverse-card conflict
-  it asks whether to suspend the other synonym's reverse card. Front/back
-  notation per category (fixed expression, verb, noun types, adjective dot
-  notation, adverb) lives in
+  it asks whether to suspend the other synonym's reverse card, and for an
+  existing adjective missing its `...ment` line it asks whether to add it.
+  Front/back notation per category (fixed expression, verb, noun types,
+  adjective dot notation, a ‑ment adverb as its adjective with `...ment` on a
+  second line, other adverbs) lives in
   [.claude/skills/ajouter/formatting.md](.claude/skills/ajouter/formatting.md).
 - [tools/anki_mcp.py](tools/anki_mcp.py) — stdio MCP server registered in
   [.mcp.json](.mcp.json). Tools: `list_decks`, `search_deck`, `word_frequency`,

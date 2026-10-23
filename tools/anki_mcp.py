@@ -48,9 +48,10 @@ def anki(action, **params):
         raise RuntimeError(f"AnkiConnect {action}: {r['error']}")
     return r["result"]
 
-def clean(s):                         # Anki fields contain HTML
-    s = re.sub(r"<[^>]+>", " ", s)
-    return re.sub(r"\s+", " ", html.unescape(s)).strip()
+def clean(s):                         # Anki fields contain HTML; line breaks stay "\n"
+    s = re.sub(r"<br\s*/?>|</?div[^>]*>", "\n", s, flags=re.I)
+    s = re.sub(r"[^\S\n]+", " ", html.unescape(re.sub(r"<[^>]+>", " ", s)))
+    return re.sub(r" *\n\s*", "\n", s).strip()
 
 
 # ── Normalization for matching ──────────────────────────────────────────────
@@ -58,14 +59,17 @@ ARTICLE_RE = re.compile(r"^(?:de la |de l'|un/une |un/e |un |une |le |la |les |l
 # Gender/plural markers: "un.e citadin.e.s", "heureux.se.s", old "frais/e/s", "beauté(s)".
 # Runs on folded text (accents stripped), so "aigu.ë.s" is already "aigu.e.s".
 PLURAL_RE  = re.compile(r"(?<=\w)(?:\.[a-z]+)+\b|(?<=\w)(?:/[a-z]+)+\b|(?<=\w)\(s\)")
+# Derived-adverb marker, left over when an old card has it on the adjective's line.
+MENT_RE    = re.compile(r"\s*\.\.\.ment$")
 
 def fold(s):                          # lowercase, accent-free, single-spaced
     s = unicodedata.normalize("NFKD", clean(s).lower().replace("’", "'"))
     s = "".join(c for c in s if not unicodedata.combining(c))
     return re.sub(r"\s+", " ", s).strip()
 
-def front_key(s):                     # "un tatouage.s" -> "tatouage"
-    return ARTICLE_RE.sub("", PLURAL_RE.sub("", fold(s))).strip(" .,;!?")
+def front_key(s):                     # "un tatouage.s" -> "tatouage", "un œil<br>yeux" -> "œil"
+    first = clean(s).split("\n")[0]   # later lines hold an irregular plural or "...ment"
+    return ARTICLE_RE.sub("", PLURAL_RE.sub("", MENT_RE.sub("", fold(first)))).strip(" .,;!?")
 
 
 # ── Lexique frequency index (from notebook cells [2.5] and [5]) ─────────────
@@ -122,11 +126,12 @@ def search_deck(terms: list[str],
     field text. Front is French, Back is English. Use French lemmas/synonyms with
     field="front" and English glosses with field="back".
 
-    Each hit has: note_id, deck, model, front, back, tags, matched_term,
-    suspended — which of the note's cards are suspended ("fr_to_en" = Card 1,
-    "en_to_fr" = Card 2) — and exact — true when the Front, minus its article
-    and gender/plural markers ("un.e citadin.e.s" -> "citadin"), equals the
-    term exactly (i.e. very likely a duplicate).
+    Each hit has: note_id, deck, model, front, back (line breaks as "\n"),
+    tags, matched_term, suspended — which of the note's cards are suspended
+    ("fr_to_en" = Card 1, "en_to_fr" = Card 2) — and exact — true when the
+    Front's first line, minus its article, gender/plural markers, and a
+    "...ment" marker ("un.e citadin.e.s" -> "citadin"), equals the term
+    exactly (i.e. very likely a duplicate).
     """
     notes = anki("notesInfo", notes=anki("findNotes", query=f'deck:"{ROOT_DECK}"'))
     decks = _note_decks()
@@ -225,7 +230,8 @@ def update_note(note_id: int, front: str | None = None, back: str | None = None)
     Use only when the user explicitly asks to fix a specific existing card.
     Show them the old → new values and get confirmation before calling this.
     (The ajouter skill calls it only for edits the user asks for, and then also
-    normalizes the note to current notation; adding cards never modifies existing ones.)
+    normalizes the note to current notation; adding cards modifies an existing
+    one only to add a "...ment" line the user approves.)
 
     Only the Front/Back fields change; deck, card type, scheduling, and tags are
     untouched. The write is re-read to verify it persisted — AnkiConnect silently

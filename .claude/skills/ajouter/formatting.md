@@ -14,12 +14,14 @@ edited, rewrite its old notation:
 |---|---|---|
 | plural spelled out | `.s` / `.x` marker | `une part parts` → `une part.s`, `un cadeau cadeaux` → `un cadeau.x` |
 | `/s`, `(s)` | `.s` | `une fête/s` → `une fête.s` |
-| `un/e`, `un(e)`, `/e`, `(e)` | `un.e`, `.e` | `un(e) photographe(s)` → `un.e photographe.s`, `un/e graphiste/s` → `un.e graphiste.s` |
-| all four adjective forms spelled out | dot notation, or split form (§5) | `inhabituel, inhabituelle inhabituels, inhabituelles` → `inhabituel.le.s` |
+| `un/e`, `un(e)`, `/e`, `(e)` | `un.e`, `.e` | `un(e) photographe(s)` → `un.e photographe.s`, `un/e graphiste/s` → `un.e graphiste.s`, `violet/te/s` → `violet.te.s` |
+| all four adjective forms spelled out | dot notation, or split form (§5) | `inhabituel, inhabituelle inhabituels, inhabituelles` → `inhabituel.le.s`, `inquiet, inquiète inquiets, inquiètes` → `inquiet.e.s` |
+| `...ment` on the adjective's line | `...ment` on its own line (§5) | `fréquent.e.s ...ment` → `fréquent.e.s<br>...ment` |
 | article missing or wrong for the noun's type | article per §4 | `participant/e/s` → `un.e participant.e.s` |
 | French synonym in parentheses on the back: `(≈ …)`, `(= …)`, `(synonym: …)` | removed; the back keeps only its English gloss (§7) | `from now on (≈ désormais)` → `from now on`, `others (= les autres)` → `others` |
 
-Irregular plurals keep the plural on its own line (`un œil<br>yeux`, §4), and
+Irregular plurals keep the plural on its own line (`un œil<br>yeux`, §4), derived
+adverbs keep `...ment` on its own line (`fréquent.e.s<br>...ment`, §5), and
 adjectives that need it keep the split form (`beau.x (bel), belle.s`).
 
 ## 1. Classify the whole entry
@@ -99,7 +101,9 @@ No article. Masculine singular, then `.feminine-ending`, then `.s`:
 | Feminine | Marker | Examples |
 |---|---|---|
 | + e | `.e.s` | `fatigué.e.s`, `prêt.e.s`, `général.e.s` |
+| ‑er → ‑ère, ‑et → ‑ète | `.e.s` (the grave accent is implied) | `fier.e.s`, `particulier.e.s`, `discret.e.s`, `inquiet.e.s`, `complet.e.s` |
 | ‑el, ‑eil → ‑elle | `.le.s` | `actuel.le.s`, `ponctuel.le.s` |
+| ‑et → ‑ette | `.te.s` | `violet.te.s`, `muet.te.s`, `net.te.s` |
 | ‑ien, ‑on → ‑ienne | `.ne.s` | `péruvien.ne.s`, `aérien.ne.s` |
 | ‑s → ‑sse, ‑x → ‑se, ‑eur → ‑euse | `.se.s` | `gros.se.s`, `heureux.se.s`, `travailleur.se.s` |
 | ‑f → ‑ve | `.ve.s` | `actif.ve.s`, `veuf.ve.s` |
@@ -116,7 +120,8 @@ belongs to the feminine (`heureux.se.s` = heureux, heureuse, heureux, heureuses)
 convention, like `un animal.x` for nouns).
 
 **Split side by side** when dot notation can't express the change (stem change,
-accent shift, a special masculine form before a vowel). Follow
+an accent shift other than ‑er/‑et → ‑ère/‑ète, a special masculine form before
+a vowel). Follow
 `fou.s (fol), folle.s`: masculine with its plural marker, the pre-vowel
 masculine in parentheses, then the feminine with its plural marker.
 
@@ -125,12 +130,29 @@ masculine in parentheses, then the feminine with its plural marker.
 `frais, fraîche.s` · `sec.s, sèche.s` · `public.s, publique.s`
 
 Phrases keep the markers on the adjective: `ouvert.e.s d'esprit`,
-`fait.e.s maison`, `bien intentionné.e.s`. An optional `...ment` suffix marks a
-derived adverb: `fréquent.e.s ...ment`.
+`fait.e.s maison`, `bien intentionné.e.s`.
+
+### Derived adverbs (`...ment`)
+
+When the adjective has a ‑ment adverb that means "in a [adjective] way", the card
+gets a second line, `...ment`: write the break as `<br>` in the field. Never put
+`...ment` on the adjective's line. This applies whether the user typed the
+adjective or the adverb: the card is the adjective's, and its back is the
+adjective's gloss only (§7).
+
+`fréquent.e.s<br>...ment` → `frequent` · `discret.e.s<br>...ment` → `discreet` ·
+`habile.s<br>...ment` → `skillful` · `doux, douce.s<br>...ment` → `soft`
+
+The marker stands for the adverb even when its spelling is irregular
+(*fréquemment*, *gentiment*, *brièvement*). An adverb whose core meaning isn't
+the adjective's stays a plain adverb card (§6): `largement` (largely; *large* is
+wide), `justement` (precisely), `carrément` (outright), `drôlement` (really).
 
 ## 6. Adverbs
 
-As they are: `largement` · `longtemps` · `là-bas` · `du coup`
+An adverb formed from an adjective with ‑ment goes on the adjective's card (§5,
+Derived adverbs). Other adverbs as they are: `largement` · `longtemps` ·
+`là-bas` · `du coup`
 
 ## 7. Back (English)
 
@@ -142,6 +164,7 @@ As they are: `largement` · `longtemps` · `là-bas` · `du coup`
 | Plural-only noun | English plural (or mass noun) | `vacation`, `pasta`, `scissors`, `data` |
 | Verb | `to …` | `to trust`, `to struggle to keep up` |
 | Adjective / adverb | the English word | `dry`, `largely` |
+| Adjective with `...ment` | the adjective's English word only | `frequent`, `discreet` |
 | Fixed expression | the natural English equivalent | `one moment, please` |
 
 Gloss the **core meaning only**, as **one English equivalent**: the one closest in
