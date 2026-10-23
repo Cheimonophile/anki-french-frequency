@@ -141,14 +141,25 @@ As they are: `largement` · `longtemps` · `là-bas` · `du coup`
 | Adjective / adverb | the English word | `dry`, `largely` |
 | Fixed expression | the natural English equivalent | `one moment, please` |
 
-Gloss the **core meaning only**: 1–2 close English equivalents, no figurative or
-specialised senses (`abattre` → `to knock down, to cut down`). For words with
-several unrelated core meanings, see SKILL.md step 1.
+Gloss the **core meaning only**, as **one English equivalent**: the one closest in
+meaning, with no figurative or specialised senses. The one exception is an
+English cognate that means the same thing:
+
+| Case | Back | Examples |
+|---|---|---|
+| The closest word is itself the cognate | that word alone | `arriver` → `to arrive` |
+| The closest word isn't a cognate, and a cognate means the same (differences of register or rarity are only nuance) | the closest word, then the cognate | `aider` → `to help, to aid` · `commencer` → `to start, to commence` · `vanter` → `to praise, to vaunt` |
+| The cognate means something else (a false or partial friend) | the closest word only | `demander` → `to ask` (not *to demand*) · `rester` → `to stay` (not *to rest*) · `abattre` → `to knock down` (not *to abate*) |
+| No cognate | the closest word only | `prôner` → `to advocate` |
+
+A comma separates the closest word from the cognate. A semicolon only separates
+unrelated core meanings the user chose to put on one card (`a lawyer; an
+avocado`, SKILL.md step 1).
 
 A sense that exists only in a context goes on its own context card (SKILL.md
-step 1), with the English for the whole phrase and no parentheses:
-`répondre au téléphone` → `to answer the phone; to pick up the phone`. The base
-card keeps the core meaning: `décrocher` → `to unhook`.
+step 1). Its back is the closest English phrase for the whole thing, by the
+same rule, with no parentheses: `répondre au téléphone` → `to answer the phone`.
+The base card keeps the core meaning: `décrocher` → `to unhook`.
 
 On a `fr_to_en` card you may add a contrast with the more common synonym:
 `to trust (≈ faire confiance à)`.
