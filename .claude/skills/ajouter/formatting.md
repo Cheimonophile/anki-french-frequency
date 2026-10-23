@@ -3,8 +3,10 @@
 How to write the French front (and English back) of a new card. Most examples
 are real cards from the deck (a few, like `Paris` or `un œil<br>yeux`, are
 illustrations). Follow the **recent** notation shown here; older
-cards use `/s`, `(s)`, or both forms spelled out (`un fouet fouets`) — don't
-copy those. When an existing card is edited, rewrite its old notation:
+cards use `/s`, `(s)`, or both forms spelled out (`un fouet fouets`) on the
+front, and a French synonym in parentheses on the back
+(`from now on (≈ désormais)`) — don't copy those. When an existing card is
+edited, rewrite its old notation:
 
 ## Old notation → current
 
@@ -15,6 +17,7 @@ copy those. When an existing card is edited, rewrite its old notation:
 | `un/e`, `un(e)`, `/e`, `(e)` | `un.e`, `.e` | `un(e) photographe(s)` → `un.e photographe.s`, `un/e graphiste/s` → `un.e graphiste.s` |
 | all four adjective forms spelled out | dot notation, or split form (§5) | `inhabituel, inhabituelle inhabituels, inhabituelles` → `inhabituel.le.s` |
 | article missing or wrong for the noun's type | article per §4 | `participant/e/s` → `un.e participant.e.s` |
+| French synonym in parentheses on the back: `(≈ …)`, `(= …)`, `(synonym: …)` | removed; the back keeps only its English gloss (§7) | `from now on (≈ désormais)` → `from now on`, `others (= les autres)` → `others` |
 
 Irregular plurals keep the plural on its own line (`un œil<br>yeux`, §4), and
 adjectives that need it keep the split form (`beau.x (bel), belle.s`).
@@ -161,5 +164,6 @@ step 1). Its back is the closest English phrase for the whole thing, by the
 same rule, with no parentheses: `répondre au téléphone` → `to answer the phone`.
 The base card keeps the core meaning: `décrocher` → `to unhook`.
 
-On a `fr_to_en` card you may add a contrast with the more common synonym:
-`to trust (≈ faire confiance à)`.
+Don't put a French synonym on the back: `to trust (≈ faire confiance à)`,
+`others (= les autres)`, `there it is! (synonym: voilà)`. The card type keeps
+synonyms apart (SKILL.md step 5).

@@ -225,7 +225,7 @@ def update_note(note_id: int, front: str | None = None, back: str | None = None)
     Use only when the user explicitly asks to fix a specific existing card.
     Show them the old → new values and get confirmation before calling this.
     (The ajouter skill calls it only for edits the user asks for, and then also
-    normalizes the front to current notation; adding cards never modifies existing ones.)
+    normalizes the note to current notation; adding cards never modifies existing ones.)
 
     Only the Front/Back fields change; deck, card type, scheduling, and tags are
     untouched. The write is re-read to verify it persisted — AnkiConnect silently

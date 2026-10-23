@@ -50,9 +50,9 @@ still produces the number (see Architecture).
   `update_note` only rewrites Front/Back of a note in the Français tree, re-reads
   to verify, and is for fixes the user explicitly asks for; the `ajouter` skill
   never modifies existing cards on its own, and when the user asks for an edit it
-  also rewrites old-notation fronts (`une part parts` → `une part.s`) in the same
-  confirmed update. `suspend_card` / `unsuspend_card` change one card of a note
-  in the Français tree (`en_to_fr` = Card 2, the reverse; `fr_to_en` = Card 1),
+  also rewrites old notation (`une part parts` → `une part.s`,
+  `from now on (≈ désormais)` → `from now on`) in the same confirmed update.
+  `suspend_card` / `unsuspend_card` change one card of a note in the Français tree (`en_to_fr` = Card 2, the reverse; `fr_to_en` = Card 1),
   re-read it to verify, and run only when the user asks or approves; each
   `search_deck` hit lists which of its cards are `suspended`. `change_deck` moves
   whole notes (all their cards) between existing decks in the Français tree —
