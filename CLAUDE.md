@@ -29,7 +29,8 @@ still produces the number (see Architecture).
 ## Adding cards: the `ajouter` skill and `anki` MCP server
 
 - [.claude/skills/ajouter/SKILL.md](.claude/skills/ajouter/SKILL.md) — workflow:
-  lemmatize → duplicate check → find in-deck synonyms → pick the synonym group's
+  lemmatize (checking, not copying, any definition given with a word) →
+  duplicate check → find in-deck synonyms → pick the synonym group's
   winner (the Canadian/Québécois term if there is one, otherwise the highest
   `word_frequency` zipf) → winner gets `Basic (and reversed card)`, the rest get
   `Basic` (French→English only) → preview → add on confirmation. Existing cards
