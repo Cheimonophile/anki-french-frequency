@@ -168,8 +168,9 @@ Derived adverbs). Other adverbs as they are: `largement` · `longtemps` ·
 | Fixed expression | the natural English equivalent | `one moment, please` |
 
 Gloss the **core meaning only**, as **one English equivalent**: the one closest in
-meaning, with no figurative or specialised senses. The one exception is an
-English cognate that means the same thing:
+meaning, with no figurative or specialised senses. A second word goes on the line
+only for an English cognate that means the same thing (next table), or when the
+first word alone is ambiguous (the table after it):
 
 | Case | Back | Examples |
 |---|---|---|
@@ -178,7 +179,22 @@ English cognate that means the same thing:
 | The cognate means something else (a false or partial friend) | the closest word only | `demander` → `to ask` (not *to demand*) · `rester` → `to stay` (not *to rest*) · `abattre` → `to knock down` (not *to abate*) |
 | No cognate | the closest word only | `prôner` → `to advocate` |
 
-A comma separates the closest word from the cognate. A semicolon only separates
+**An ambiguous word gets company.** Read the back as a learner would, without
+the French. If its word has another common sense, in the same part of speech,
+that a reader could take instead, the gloss is ambiguous (`to` and `a/an`
+already rule out another part of speech).
+
+| Case | Back | Examples |
+|---|---|---|
+| The word's common senses all, or mostly, match the French word's | that word alone | `arriver` → `to arrive` |
+| The closest word is ambiguous, but a close equivalent isn't | the unambiguous one alone | `visser` → `to screw in` (not *to screw*) |
+| Every close equivalent is ambiguous | two of them, closest first, whose shared sense is the one meant; a third only if two still leave it open | `susciter` → `to arouse, to spark` (*arouse* alone reads as sexual, *spark* as setting alight) |
+
+A cognate on the line counts as one of the words: `aider` → `to help, to aid`
+needs nothing more.
+
+A comma separates the words that gloss one meaning: the closest word, a cognate,
+or a second word that settles an ambiguity. A semicolon only separates
 unrelated core meanings the user chose to put on one card (`a lawyer; an
 avocado`, SKILL.md step 1).
 
