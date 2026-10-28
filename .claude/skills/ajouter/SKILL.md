@@ -80,7 +80,7 @@ Division of labour (do not blur it): **you** produce lemmas, glosses, and synony
      ```
      Options: **"Add ...ment line (Recommended)"** and **"Leave it"**. These questions count toward the 4-per-call limit.
 
-8. **Add.** Add only the cards the user approved through `AskUserQuestion` in step 7. Call `add_note` once per approved card, with exactly the Front, Back, card type, and deck shown in its approved preview. Then call `suspend_card(note_id, "en_to_fr")` for each suspend candidate the user approved whose new card was added. Call `update_note` for each add-the-line candidate the user approved, with exactly the previewed fields. Report the resulting note ids, each suspension (front, `was_suspended → suspended`), and each update (old → new from its result; if it raises because the note didn't change, tell the user to close the Anki Browser and retry). A candidate the user left active is still a conflict: mention it once more. New cards go to the end of the new-card queue; mention that the frequency-sort notebook can reorder them later.
+8. **Add.** Add only the cards the user approved through `AskUserQuestion` in step 7. Call `add_note` once per approved card, with exactly the Front, Back, card type, and deck shown in its approved preview. Fields are HTML: keep `<br>` as the line break and escape any other `<`, `>` and `&` (`être sur le point de &lt;infinitive&gt;`, formatting.md §8), in `update_note` calls too. Then call `suspend_card(note_id, "en_to_fr")` for each suspend candidate the user approved whose new card was added. Call `update_note` for each add-the-line candidate the user approved, with exactly the previewed fields. Report the resulting note ids, each suspension (front, `was_suspended → suspended`), and each update (old → new from its result; if it raises because the note didn't change, tell the user to close the Anki Browser and retry). A candidate the user left active is still a conflict: mention it once more. New cards go to the end of the new-card queue; mention that the frequency-sort notebook can reorder them later.
 
 ## Editing an existing card
 
@@ -95,7 +95,7 @@ Only when the user explicitly asks to change a specific existing note (a new glo
    Back:  a share a piece; a slice  →  a piece; a slice (of cake, pizza)
    ```
    Options: **"Update as shown (Recommended)"**, **"Only the requested change"** (keeps the old notation; preview it), and **"Don't change it"**.
-5. **Update.** Call `update_note` with exactly the approved fields and report old → new from its result. If it raises because the note didn't change, tell the user to close the Anki Browser and retry.
+5. **Update.** Call `update_note` with exactly the approved fields, written as HTML per formatting.md §8: a field taken from `search_deck` comes back as display text, so turn `\n` back into `<br>` and re-escape `<`, `>` and `&`. Report old → new from its result. If it raises because the note didn't change, tell the user to close the Anki Browser and retry.
 
 ## Suspending or unsuspending a card
 

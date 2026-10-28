@@ -54,7 +54,8 @@ and the governed preposition:
 `avoir du mal à suivre` · `être passionné.e.s par`
 
 Keep the deck's placeholders for open slots: `avoir du mal à <infinitive>`,
-`prêt.e.s <à>`.
+`prêt.e.s <à>`. In the field they're escaped: `avoir du mal à
+&lt;infinitive&gt;` (§8).
 
 **Impersonal verbs** (only ever used with impersonal *il*) keep `il`, in the
 present tense, instead of a bare infinitive: `il fait beau` · `il faut
@@ -206,3 +207,29 @@ The base card keeps the core meaning: `décrocher` → `to unhook`.
 Don't put a French synonym on the back: `to trust (≈ faire confiance à)`,
 `others (= les autres)`, `there it is! (synonym: voilà)`. The card type keeps
 synonyms apart (SKILL.md step 5).
+
+## 8. Writing the fields (HTML)
+
+Anki stores Front and Back as HTML, and `add_note` and `update_note` write the
+text exactly as given. `<br>` is the only tag a field uses: it's the line break
+(`un œil<br>yeux`). Escape every other `<`, `>` and `&`, or Anki reads it as
+markup: a bare `<infinitive>` is an unknown tag, and the card shows nothing in
+its place.
+
+| Character | In the field | Example |
+|---|---|---|
+| `<` | `&lt;` | `être sur le point de <infinitive>` → `être sur le point de &lt;infinitive&gt;` |
+| `>` | `&gt;` | `prêt.e.s <à>` → `prêt.e.s &lt;à&gt;` |
+| `&` | `&amp;` | `R&D` → `R&amp;D` |
+
+Accents, apostrophes, `!`, `?`, `…` and `« »` go in as they are.
+
+Previews show a field the way this file writes it: `<br>` for a line break,
+placeholders unescaped (`<infinitive>`). Only the tool call carries the escaped
+form.
+
+`search_deck` returns display text, with tags removed, entities decoded, and
+line breaks as `\n`. When `update_note` rewrites a field taken from a search
+hit, turn each `\n` back into `<br>` and escape the rest again. The same display
+text shows whether a write came out right: a placeholder swallowed as a tag
+leaves the front one word short (`être sur le point de`, no `<infinitive>`).
