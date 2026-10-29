@@ -62,11 +62,19 @@ present tense, instead of a bare infinitive: `il fait beau` · `il faut
 <infinitive>` · `il y a`. They still conjugate in use (*il faisait beau*), so
 they are verbs, not fixed expressions.
 
+**A pronominal form with its own meaning** gets its own card, next to the base
+verb's (SKILL.md step 1): `passer` → `to pass` · `se passer` → `to happen`;
+`douter` → `to doubt` · `se douter de` → `to suspect`. A reflexive or
+reciprocal of the same meaning doesn't: `se laver` is just *laver* done to
+oneself.
+
 ## 4. Nouns and noun phrases
 
 Pick the first type that fits: **proper → usually definite → plural-only →
 uncountable → countable**. Decide from the bare noun; the article in the
-user's input doesn't count as evidence for the type (see SKILL.md step 1).
+user's input doesn't count as evidence for the type (see SKILL.md step 1). Do
+this once per use: a noun with more than one use gets a card for each (see
+"Nouns with more than one use" below).
 
 | Type | Front | Examples |
 |---|---|---|
@@ -94,6 +102,23 @@ Use the adjective endings from §5 after the noun:
 `un.e citadin.e.s` · `un.e informaticien.ne.s` · `un.e chasseur.se.s` ·
 `un.e traducteur.rice.s` · `un.e chef.fe.s` · `un.e hôte.esse.s` ·
 epicene (same form for both): `un.e stagiaire.s`, `un.e malade.s`.
+
+### Nouns with more than one use
+
+A noun can have more than one common use, each with its own meaning and type.
+Each use gets its own card, with its front from the tables above and its back
+from §7 (SKILL.md step 1):
+
+| Uses | Cards |
+|---|---|
+| activity + one instance | `le rasage` → `shaving` · `un rasage.s` → `a shave` |
+| material + object | `du verre` → `glass` · `un verre.s` → `a glass` |
+| mass + single item | `des cheveux` → `hair` · `un cheveu.x` → `a hair` |
+| unrelated meanings | `un gommage.s` → `an exfoliating scrub` · `le gommage` → `erasing` |
+
+Not a separate use: the same meaning with another determiner (`le lait`, `du
+lait` → one card, `du lait`), or a serving or kind of a mass noun (`une bière`,
+"a beer", is covered by `de la bière`).
 
 ## 5. Adjectives and adjective phrases
 
@@ -132,6 +157,11 @@ masculine in parentheses, then the feminine with its plural marker.
 
 Phrases keep the markers on the adjective: `ouvert.e.s d'esprit`,
 `fait.e.s maison`, `bien intentionné.e.s`.
+
+An adjective that's also a common noun gets a second card, typed by §4
+(SKILL.md step 1): `malade.s` → `sick` · `un.e malade.s` → `a patient`;
+`inconnu.e.s` → `unknown` · `un.e inconnu.e.s` → `a stranger`. A noun for "the
+[adjective] one(s)" doesn't: `les riches` (the rich).
 
 ### Derived adverbs (`...ment`)
 
